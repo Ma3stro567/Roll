@@ -89,7 +89,7 @@ public final class KonditsiaAC extends JavaPlugin implements Listener {
             flightViolations.put(player.getUniqueId(), violations);
 
             if (violations >= 3) {
-                tempBan(player, "Полет (Дистанция: " + distance + " блоков)", "7d");
+                tempBan(player, "Полет (Дистанция: " + String.format("%.1f", distance) + " блоков)", "7d");
                 flightViolations.remove(player.getUniqueId());
             }
         }
