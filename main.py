@@ -2,7 +2,7 @@ from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import logging
 
-TOKEN = 'YOUR_BOT_TOKEN'
+TOKEN = '7643851453:AAF6uzlSPJ78vA2F7fgG-EWYaS3UgpP-TMg'
 ADMIN_PASSWORD = "14885252"
 
 admins = set()
