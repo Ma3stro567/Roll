@@ -1,5 +1,5 @@
 from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 import logging
 
 TOKEN = '7250583371:AAGYFPlaX26WzoUHxi9lKKBHbZIjwk6_Znc'
@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Привет! Напиши сообщение, и оно попадёт админу.")
+    update.message.reply_text("Привет тут ты можешь связаться со мной.")
 
 
 def admin_panel(update: Update, context: CallbackContext):
