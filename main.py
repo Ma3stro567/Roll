@@ -1,5 +1,5 @@
-from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import logging
 
 TOKEN = '7250583371:AAGYFPlaX26WzoUHxi9lKKBHbZIjwk6_Znc'
@@ -11,35 +11,35 @@ banned_users = set()
 logging.basicConfig(level=logging.INFO)
 
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Привет тут ты можешь связаться со мной.")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет тут ты можешь связаться со мной.")
 
 
-def admin_panel(update: Update, context: CallbackContext):
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if ADMIN_PASSWORD in update.message.text:
         admins.add(update.message.from_user.id)
-        update.message.reply_text("✅ Вы вошли в админ-панель.\nДоступные команды:\n/ban <user_id>")
+        await update.message.reply_text("✅ Вы вошли в админ-панель.\nДоступные команды:\n/ban <user_id>")
     else:
-        update.message.reply_text("❌ Неверный пароль.")
+        await update.message.reply_text("❌ Неверный пароль.")
 
 
-def ban_user(update: Update, context: CallbackContext):
+async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     if user_id not in admins:
-        update.message.reply_text("⛔ У вас нет прав.")
+        await update.message.reply_text("⛔ У вас нет прав.")
         return
     try:
         target_id = int(context.args[0])
         banned_users.add(target_id)
-        update.message.reply_text(f"🔒 Пользователь {target_id} забанен.")
-    except:
-        update.message.reply_text("⚠️ Использование: /ban <user_id>")
+        await update.message.reply_text(f"🔒 Пользователь {target_id} забанен.")
+    except (IndexError, ValueError):
+        await update.message.reply_text("⚠️ Использование: /ban <user_id>")
 
 
-def handle_user_message(update: Update, context: CallbackContext):
+async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     if user.id in banned_users:
-        update.message.reply_text("⛔ Вы забанены.")
+        await update.message.reply_text("⛔ Вы забанены.")
         return
 
     username = f"@{user.username}" if user.username else "Без username"
@@ -47,10 +47,10 @@ def handle_user_message(update: Update, context: CallbackContext):
 
     # Отправка всем админам
     for admin_id in admins:
-        context.bot.send_message(chat_id=admin_id, text=msg)
+        await context.bot.send_message(chat_id=admin_id, text=msg)
 
 
-def admin_reply(update: Update, context: CallbackContext):
+async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from_user = update.message.from_user.id
     if from_user not in admins or not update.message.reply_to_message:
         return
@@ -68,26 +68,24 @@ def admin_reply(update: Update, context: CallbackContext):
 
     if target_id:
         try:
-            context.bot.send_message(chat_id=target_id, text=update.message.text)
-            update.message.reply_text("✅ Ответ отправлен.")
+            await context.bot.send_message(chat_id=target_id, text=update.message.text)
+            await update.message.reply_text("✅ Ответ отправлен.")
         except:
-            update.message.reply_text("❌ Не удалось отправить сообщение.")
+            await update.message.reply_text("❌ Не удалось отправить сообщение.")
     else:
-        update.message.reply_text("⚠️ Не найден ID пользователя.")
+        await update.message.reply_text("⚠️ Не найден ID пользователя.")
 
 
 def main():
-    updater = Updater(token=TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = ApplicationBuilder().token(TOKEN).build()
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("adminpanel", admin_panel))
-    dp.add_handler(CommandHandler("ban", ban_user, pass_args=True))
-    dp.add_handler(MessageHandler(Filters.text & Filters.reply, admin_reply))
-    dp.add_handler(MessageHandler(Filters.text, handle_user_message))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("adminpanel", admin_panel))
+    app.add_handler(CommandHandler("ban", ban_user))
+    app.add_handler(MessageHandler(filters.TEXT & filters.REPLY, admin_reply))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_message))
 
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 
 if __name__ == '__main__':
